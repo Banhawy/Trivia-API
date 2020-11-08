@@ -8,6 +8,16 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+def paginate_questions(request, selection):
+  page = request.args.get('page', 1, type=int)
+  start = (page - 1) * QUESTIONS_PER_PAGE
+  end = start + QUESTIONS_PER_PAGE
+
+  questions = [question.format() for question in selection]
+  current_questions = questions[start:end]
+
+  return current_questions
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
@@ -31,10 +41,10 @@ def create_app(test_config=None):
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
-
+  
 
   '''
-  @TODO: 
+  @DONE:
   Create an endpoint to handle GET requests for questions, 
   including pagination (every 10 questions). 
   This endpoint should return a list of questions, 
@@ -45,7 +55,27 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
+  @app.route('/questions')
+  def retrieve_quesions():
+    selection = Question.query.order_by(Question.id).all()
+    current_questions = paginate_questions(request, selection)
 
+    categories_slection = Category.query.order_by(Category.id).all()
+    categories = {}
+    for category in categories_slection:
+      categories[category.id] = category.type
+    current_category = [question['category'] for question in current_questions]
+
+    if len(current_questions) == 0:
+      abort(404)
+    
+    return jsonify({
+      'success': True,
+      'questions': current_questions,
+      'total_questions': len(Question.query.all()),
+      'current_category': current_category,
+      'categories': categories
+    })
   '''
   @TODO: 
   Create an endpoint to DELETE question using a question ID. 
@@ -103,6 +133,13 @@ def create_app(test_config=None):
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      "success": False,
+      "error": 404,
+      "message": "resource not found"
+    }), 404
   
   return app
 
