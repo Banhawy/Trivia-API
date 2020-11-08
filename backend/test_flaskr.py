@@ -17,6 +17,13 @@ class TriviaTestCase(unittest.TestCase):
         self.database_path = config.test_database_path
         setup_db(self.app, self.database_path)
 
+        self.new_question = {
+            'question': 'What year is it??',
+            'answer': '1869',
+            'category': 'Tricky',
+            'difficulty': 3
+        }
+
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -41,7 +48,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
+        self.assertTrue(data['current_category'])
+        self.assertTrue(data['categories'])
 
+    def test_404_sent_requesting_beyond_valid_page(self):
+        res = self.client().get('/questions?page=2000', json={'difficulty': 1})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'resource not found')
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
