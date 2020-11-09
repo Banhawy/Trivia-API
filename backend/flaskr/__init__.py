@@ -18,6 +18,16 @@ def paginate_questions(request, selection):
 
   return current_questions
 
+def get_current_categories(current_questions):
+  categories_slection = Category.query.order_by(Category.id).all()
+  categories = {}
+  
+  for category in categories_slection:
+    categories[category.id] = category.type
+  current_category = [question['category'] for question in current_questions]
+  
+  return (current_category, categories)
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
@@ -59,12 +69,8 @@ def create_app(test_config=None):
   def retrieve_quesions():
     selection = Question.query.order_by(Question.id).all()
     current_questions = paginate_questions(request, selection)
-
-    categories_slection = Category.query.order_by(Category.id).all()
-    categories = {}
-    for category in categories_slection:
-      categories[category.id] = category.type
-    current_category = [question['category'] for question in current_questions]
+    current_category = get_current_categories(current_questions)[0]
+    categories = get_current_categories(current_questions)[1]
 
     if len(current_questions) == 0:
       abort(404)
@@ -107,14 +113,29 @@ def create_app(test_config=None):
   '''
 
   '''
-  @TODO: 
+  @DONE: 
   Create a GET endpoint to get questions based on category. 
 
   TEST: In the "List" tab / main screen, clicking on one of the 
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  @app.route('/categories/<int:category_id>')
+  def get_category_questions(category_id):
+    try:
+      category_questions = Question.query.filter(Question.category == category_id).all()
+      questions = [question.format() for question in category_questions]
+      current_category = get_current_categories(questions)[0]
 
+      return jsonify({
+        "success": True,
+        "questions": questions,
+        "total_questions": len(questions),
+        "current_category": current_category
+      })
+    
+    except:
+      abort(400)
 
   '''
   @TODO: 
@@ -140,6 +161,14 @@ def create_app(test_config=None):
       "error": 404,
       "message": "resource not found"
     }), 404
+
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      "success": False, 
+      "error": 400,
+      "message": "bad request"
+      }), 400
   
   return app
 
