@@ -150,7 +150,7 @@ def create_app(test_config=None):
       abort(422)
 
   '''
-  @TODO: 
+  @DONE: 
   Create a POST endpoint to get questions based on a search term. 
   It should return any questions for whom the search term 
   is a substring of the question. 
@@ -159,7 +159,23 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
-
+  @app.route('/questions/search', methods=['POST'])
+  def search_questions():
+    body = request.get_json()
+    search_term = body.get('searchTerm', None)
+    try:
+      questions = Question.query.filter(Question.question.ilike('%' + search_term + '%'))
+      current_questions = paginate_questions(request, questions)
+      current_category = get_current_categories(current_questions)[0]
+      
+      return jsonify({
+        'success': True,
+        'questions': current_questions,
+        'total_questions': len(current_questions),
+        'current_category': current_category
+      })
+    except:
+      abort(422)
   '''
   @DONE: 
   Create a GET endpoint to get questions based on category. 
@@ -203,7 +219,7 @@ def create_app(test_config=None):
   '''
 
   '''
-  @TODO: 
+  @DONE: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
