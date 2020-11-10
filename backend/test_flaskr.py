@@ -77,14 +77,13 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
     
-    def test_empty_category(self):
+    def test_nonexistent_category(self):
         res = self.client().get('/categories/2222')
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertFalse(len(data['questions']))
-        self.assertFalse(data['current_category'])
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'resource not found')
 
     def test_create_new_question(self):
         res = self.client().post('/questions', json=self.new_question)
@@ -99,6 +98,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
+    
+    def test_get_all_categories(self):
+        res = self.client().get('/categories')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(len(data['categories']))
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
