@@ -18,12 +18,13 @@ def paginate_questions(request, selection):
 
   return current_questions
 
-def get_current_categories(current_questions):
+def get_current_categories(current_questions=[]):
   categories_slection = Category.query.order_by(Category.id).all()
   categories = {}
   
   for category in categories_slection:
     categories[category.id] = category.type
+  
   current_category = [question['category'] for question in current_questions]
   
   return (current_category, categories)
@@ -47,11 +48,21 @@ def create_app(test_config=None):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
     return response
   '''
-  @TODO: 
+  @DONE: 
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
-  
+  @app.route('/categories')
+  def retrieve_categories():
+    try:
+      categories = get_current_categories()[1]
+      
+      return jsonify({
+        'success': True,
+        'categories': categories
+      }) 
+    except:
+      abort(422)
 
   '''
   @DONE:
@@ -161,6 +172,8 @@ def create_app(test_config=None):
   def get_category_questions(category_id):
     try:
       category_questions = Question.query.filter(Question.category == category_id).all()
+      if len(category_questions) == 0:
+        raise Exception('category not found')
       questions = [question.format() for question in category_questions]
       current_category = get_current_categories(questions)[0]
 
@@ -171,8 +184,11 @@ def create_app(test_config=None):
         "current_category": current_category
       })
     
-    except:
-      abort(400)
+    except Exception as e:
+      if (e.args[0] == 'category not found'):
+        abort(404)
+      else:
+        abort(422)
 
   '''
   @TODO: 
