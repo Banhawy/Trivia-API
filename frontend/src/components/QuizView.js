@@ -71,6 +71,11 @@ class QuizView extends Component {
         return;
       },
       error: (error) => {
+        if (error.status === 422) {
+          alert('You ran out of questions in this category')
+          this.setState({forceEnd: true})
+          return;
+        }
         alert('Unable to load question. Please try your request again')
         return;
       }

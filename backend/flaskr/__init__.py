@@ -2,6 +2,7 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from  sqlalchemy.sql.expression import func
 import random
 
 from models import setup_db, Question, Category
@@ -228,14 +229,25 @@ def create_app(test_config=None):
         current_question = Question.query\
                                     .filter(~Question.id.in_(previous_questions), 
                                             Question.category == quiz_category['id'])\
+                                    .order_by(func.random())\
                                     .first()
       else:
         current_question = Question.query\
                                     .filter(~Question.id.in_(previous_questions))\
+                                    .order_by(func.random())\
                                     .first()
+
+      # Condition for the case where we run out of questions in a category
+      if current_question is not None:
+        current_question = current_question.format()
+      else:
+        print('fuck')
+        print(current_question)
+        abort(422)
+
       return jsonify({
         'success': True,
-        'question': current_question.format()
+        'question': current_question
       })
 
     except:
